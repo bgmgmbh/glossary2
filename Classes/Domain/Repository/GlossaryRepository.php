@@ -19,6 +19,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\Database\Query\Restriction\FrontendRestrictionContainer;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 use TYPO3\CMS\Extbase\Persistence\Repository;
@@ -61,11 +62,11 @@ class GlossaryRepository extends Repository
         return $extbaseQuery->execute();
     }
 
-    public function searchGlossaries(array $categories = [], string $letter = ''): QueryResultInterface
+    public function searchGlossaries(array $categories = [], string $letter = '')
     {
         // Set respectSysLanguage to false to keep our already translated records
         $extbaseQuery = $this->createQuery();
-        $extbaseQuery->getQuerySettings()->setRespectSysLanguage(false);
+        $extbaseQuery->getQuerySettings()->setRespectSysLanguage(true);
 
         $queryBuilder = $this->getQueryBuilderForTable(
             'tx_glossary2_domain_model_glossary',
@@ -113,7 +114,21 @@ class GlossaryRepository extends Repository
 
         $extbaseQuery->statement($queryBuilder);
 
-        return $extbaseQuery->execute();
+        $results = $extbaseQuery->execute();
+
+        /** @var SiteLanguage $siteLanguage */
+        $siteLanguage = $GLOBALS['TYPO3_REQUEST']->getAttribute('language');
+        if($siteLanguage->getLanguageId() === 0){
+            return $results;
+        }
+
+        $sorted = [];
+        foreach($results as $result){
+            $sorted[$result->getTitle() . $result->getUid()] = $result;
+        }
+        ksort($sorted);
+
+        return $sorted;
     }
 
     protected function checkArgumentsForSearchGlossaries(array $categories, string $letter): bool

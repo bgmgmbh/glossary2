@@ -12,9 +12,11 @@ declare(strict_types=1);
 namespace JWeiland\Glossary2\EventListener;
 
 use JWeiland\Glossary2\Event\PostProcessFluidVariablesEvent;
+use TYPO3\CMS\Core\Pagination\ArrayPaginator;
 use TYPO3\CMS\Core\Pagination\SimplePagination;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Extbase\Pagination\QueryResultPaginator;
+use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 
 class AddPaginatorEventListener extends AbstractControllerEventListener
 {
@@ -32,11 +34,21 @@ class AddPaginatorEventListener extends AbstractControllerEventListener
     public function __invoke(PostProcessFluidVariablesEvent $event): void
     {
         if ($this->isValidRequest($event)) {
-            $paginator = new QueryResultPaginator(
-                $event->getFluidVariables()['glossaries'],
-                $this->getCurrentPage($event),
-                $this->getItemsPerPage($event)
-            );
+            $queryResults = $event->getFluidVariables()['glossaries'];
+
+            if(is_array($queryResults)){
+                $paginator = new ArrayPaginator(
+                    $queryResults,
+                    $this->getCurrentPage($event),
+                    $this->getItemsPerPage($event)
+                );
+            } else {
+                $paginator = new QueryResultPaginator(
+                    $queryResults,
+                    $this->getCurrentPage($event),
+                    $this->getItemsPerPage($event)
+                );
+            }
 
             $event->addFluidVariable('actionName', $event->getActionName());
             $event->addFluidVariable('paginator', $paginator);
