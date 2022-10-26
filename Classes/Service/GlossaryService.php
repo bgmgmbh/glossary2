@@ -20,6 +20,7 @@ use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Database\Query\Expression\CompositeExpression;
 use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Extbase\Persistence\Generic\Qom\ComparisonInterface;
@@ -27,6 +28,7 @@ use TYPO3\CMS\Extbase\Persistence\Generic\Qom\ConstraintInterface;
 use TYPO3\CMS\Extbase\Persistence\Generic\Qom\OrInterface;
 use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use TYPO3\CMS\Fluid\View\StandaloneView;
+use TYPO3\CMS\Frontend\Page\PageRepository;
 
 /**
  * Public API to build your glossary (A-Z) for your own Extension
@@ -210,32 +212,23 @@ class GlossaryService
         string $column,
         string $columnAlias
     ): array {
-        if ($queryBuilder->getConnection()->getDatabasePlatform() instanceof MySqlPlatform) {
-            $statement = $queryBuilder
-                ->selectLiteral(sprintf('SUBSTRING(%s, 1, 1) as %s', $column, $columnAlias))
-                ->add('groupBy', $columnAlias)
-                ->add('orderBy', $columnAlias)
-                ->execute();
+        /** @var SiteLanguage $language */
+        $language = $GLOBALS['TYPO3_REQUEST']->getAttribute('language');
 
-            $firstLetters = [];
-            while ($record = $statement->fetch()) {
-                $firstLetter = mb_strtolower($record[$columnAlias]);
-                $firstLetters[] = $firstLetter;
-            }
-        } else {
-            // This will collect nearly all records and could be an
-            // performance issue, if you have a lot of records
-            $statement = $queryBuilder
-                ->select($column . ' AS ' . $columnAlias)
-                ->add('groupBy', $columnAlias)
-                ->add('orderBy', $columnAlias)
-                ->execute();
+        // current site language
+        $statement = $queryBuilder
+            ->select('*')
+            ->add('orderBy', $column)
+            ->execute();
 
-            $firstLetters = [];
-            while ($record = $statement->fetch()) {
-                $firstLetter = mb_strtolower($record[$columnAlias][0]);
-                $firstLetters[$firstLetter] = $firstLetter;
-            }
+        $firstLetters = [];
+        while ($record = $statement->fetch()) {
+            /** @var PageRepository $pageRepository */
+            $pageRepository = $GLOBALS['TSFE']->sys_page;
+            $record = $pageRepository->getRecordOverlay('tx_glossary2_domain_model_glossary', $record, $language->getLanguageId());
+
+            $firstLetter = mb_strtolower(substr($record[$column], 0, 1));
+            $firstLetters[$firstLetter] = $firstLetter;
         }
 
         $firstLetters = array_unique($this->cleanUpFirstLetters($firstLetters));
