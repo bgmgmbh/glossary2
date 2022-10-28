@@ -62,7 +62,10 @@ class GlossaryController extends ActionController
      */
     public function listAction(string $letter = ''): void
     {
+        $language = $GLOBALS['TYPO3_REQUEST']->getAttribute('language');
+
         $this->postProcessAndAssignFluidVariables([
+            'languageCode' => strtolower($language->getNavigationTitle()),
             'letter' => $letter,
             'glossaries' => $this->glossaryRepository->searchGlossaries(
                 GeneralUtility::intExplode(',', $this->settings['categories'], true),
