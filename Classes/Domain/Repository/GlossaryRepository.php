@@ -116,19 +116,22 @@ class GlossaryRepository extends Repository
 
         $results = $extbaseQuery->execute();
 
-        /** @var SiteLanguage $siteLanguage */
-        $siteLanguage = $GLOBALS['TYPO3_REQUEST']->getAttribute('language');
-        if($siteLanguage->getLanguageId() === 0){
-            return $results;
-        }
-
         $sorted = [];
         foreach($results as $result){
-            $sorted[$result->getTitle() . $result->getUid()] = $result;
+            $title = $this->cleanOutUmlauts($result->getTitle());
+            $sorted[$title . $result->getUid()] = $result;
         }
         ksort($sorted);
 
         return $sorted;
+    }
+
+    protected function cleanOutUmlauts($string){
+        $string = mb_strtolower($string);
+        $string = str_replace('ä', 'ae', $string);
+        $string = str_replace('ö', 'oe', $string);
+        $string = str_replace('ü', 'ue', $string);
+        return $string;
     }
 
     protected function checkArgumentsForSearchGlossaries(array $categories, string $letter): bool
