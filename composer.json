@@ -1,5 +1,5 @@
 {
-	"name": "bgm/glossary2",
+	"name": "jweiland/glossary",
 	"description": "This TYPO3 extension creates a glossary with A-Z links for you",
 	"license": "GPL-2.0-or-later",
 	"type": "typo3-cms-extension",
