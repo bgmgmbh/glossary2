@@ -18,20 +18,17 @@ use TYPO3\CMS\Core\Utility\ArrayUtility;
 
 class AddGlossaryEventListener extends AbstractControllerEventListener
 {
-    /**
-     * @var GlossaryService
-     */
-    protected $glossaryService;
+    protected GlossaryService $glossaryService;
+
+    protected GlossaryRepository $glossaryRepository;
 
     /**
-     * @var GlossaryRepository
+     * @var array<string, mixed>
      */
-    protected $glossaryRepository;
-
-    protected $allowedControllerActions = [
+    protected array $allowedControllerActions = [
         'Glossary' => [
-            'list'
-        ]
+            'list',
+        ],
     ];
 
     public function __construct(GlossaryService $glossaryService, GlossaryRepository $glossaryRepository)
@@ -46,13 +43,17 @@ class AddGlossaryEventListener extends AbstractControllerEventListener
             $event->addFluidVariable(
                 'glossary',
                 $this->glossaryService->buildGlossary(
-                    $this->glossaryRepository->getQueryBuilderForGlossary(),
-                    $this->getOptions($event)
-                )
+                    $this->glossaryRepository->getExtbaseQueryForGlossary(),
+                    $this->getOptions($event),
+                    $event->getRequest(),
+                ),
             );
         }
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     protected function getOptions(PostProcessFluidVariablesEvent $event): array
     {
         $options = [
@@ -61,7 +62,7 @@ class AddGlossaryEventListener extends AbstractControllerEventListener
             'controllerName' => 'Glossary',
             'column' => 'title',
             'settings' => $event->getSettings(),
-            'variables' => $event->getFluidVariables()
+            'variables' => $event->getFluidVariables(),
         ];
 
         if (

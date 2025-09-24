@@ -12,23 +12,34 @@ declare(strict_types=1);
 namespace JWeiland\Glossary2\EventListener;
 
 use JWeiland\Glossary2\Event\PostProcessFluidVariablesEvent;
-use TYPO3\CMS\Core\Pagination\ArrayPaginator;
+use JWeiland\Glossary2\Event\PostProcessFluidVariablesEvent;
+use TYPO3\CMS\Core\Pagination\PaginationInterface;
+use TYPO3\CMS\Core\Pagination\PaginatorInterface;
 use TYPO3\CMS\Core\Pagination\SimplePagination;
 use TYPO3\CMS\Core\Utility\MathUtility;
 use TYPO3\CMS\Extbase\Pagination\QueryResultPaginator;
+
+use TYPO3\CMS\Core\Pagination\ArrayPaginator;
 use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 
 class AddPaginatorEventListener extends AbstractControllerEventListener
 {
-    /**
-     * @var int
-     */
-    protected $itemsPerPage = 15;
+    protected int $itemsPerPage = 15;
 
-    protected $allowedControllerActions = [
+    /**
+     * Fluid variable name for paginated records
+     */
+    protected string $fluidVariableForPaginatedRecords = 'glossaries';
+
+    protected string $fallbackPaginationClass = SimplePagination::class;
+
+    /**
+     * @var array<string, mixed>
+     */
+    protected array $allowedControllerActions = [
         'Glossary' => [
-            'list'
-        ]
+            'list',
+        ],
     ];
 
     public function __invoke(PostProcessFluidVariablesEvent $event): void
@@ -36,13 +47,14 @@ class AddPaginatorEventListener extends AbstractControllerEventListener
         if ($this->isValidRequest($event)) {
             $queryResults = $event->getFluidVariables()['glossaries'];
 
-            if(is_array($queryResults)){
+            if (is_array($queryResults)) {
                 $paginator = new ArrayPaginator(
                     $queryResults,
                     $this->getCurrentPage($event),
                     $this->getItemsPerPage($event)
                 );
-            } else {
+            }
+            else {
                 $paginator = new QueryResultPaginator(
                     $queryResults,
                     $this->getCurrentPage($event),
@@ -52,8 +64,8 @@ class AddPaginatorEventListener extends AbstractControllerEventListener
 
             $event->addFluidVariable('actionName', $event->getActionName());
             $event->addFluidVariable('paginator', $paginator);
-            $event->addFluidVariable('glossaries', $paginator->getPaginatedItems());
-            $event->addFluidVariable('pagination', new SimplePagination($paginator));
+            $event->addFluidVariable($this->fluidVariableForPaginatedRecords, $paginator->getPaginatedItems());
+            $event->addFluidVariable('pagination', $this->getPagination($event, $paginator));
         }
     }
 
@@ -65,7 +77,7 @@ class AddPaginatorEventListener extends AbstractControllerEventListener
             // See: AbstractPaginator::setCurrentPageNumber()
             $currentPage = MathUtility::forceIntegerInRange(
                 (int)$event->getRequest()->getArgument('currentPage'),
-                1
+                1,
             );
         }
 
@@ -74,7 +86,23 @@ class AddPaginatorEventListener extends AbstractControllerEventListener
 
     protected function getItemsPerPage(PostProcessFluidVariablesEvent $event): int
     {
-        $itemsPerPage = $event->getSettings()['pageBrowser']['itemsPerPage'] ?? $this->itemsPerPage;
-        return (int)$itemsPerPage;
+        return (int)($event->getSettings()['pageBrowser']['itemsPerPage'] ?? $this->itemsPerPage);
+    }
+
+    protected function getPagination(
+        PostProcessFluidVariablesEvent $event,
+        PaginatorInterface $paginator,
+    ): PaginationInterface {
+        $paginationClass = $event->getSettings()['pageBrowser']['class'] ?? $this->fallbackPaginationClass;
+
+        if (!class_exists($paginationClass)) {
+            $paginationClass = $this->fallbackPaginationClass;
+        }
+
+        if (!is_subclass_of($paginationClass, PaginationInterface::class)) {
+            $paginationClass = $this->fallbackPaginationClass;
+        }
+
+        return new $paginationClass($paginator);
     }
 }

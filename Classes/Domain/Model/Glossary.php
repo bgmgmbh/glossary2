@@ -13,6 +13,7 @@ namespace JWeiland\Glossary2\Domain\Model;
 
 use JWeiland\Glossary2\Helper\CharsetHelper;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Annotation\ORM\Lazy;
 use TYPO3\CMS\Extbase\Domain\Model\Category;
 use TYPO3\CMS\Extbase\Domain\Model\FileReference;
 use TYPO3\CMS\Extbase\DomainObject\AbstractEntity;
@@ -23,32 +24,35 @@ use TYPO3\CMS\Extbase\Persistence\ObjectStorage;
  */
 class Glossary extends AbstractEntity
 {
-    /**
-     * @var string
-     */
-    protected $title = '';
+    protected string $title = '';
+
+    protected string $description = '';
 
     /**
-     * @var string
+     * @var ObjectStorage<FileReference>
+     * @Lazy
      */
-    protected $description = '';
+    protected ObjectStorage $images;
 
     /**
-     * @var \TYPO3\CMS\Extbase\Persistence\ObjectStorage<\TYPO3\CMS\Extbase\Domain\Model\FileReference>
-     * @TYPO3\CMS\Extbase\Annotation\ORM\Lazy
+     * @var ObjectStorage<Category>
+     * @Lazy
      */
-    protected $images;
-
-    /**
-     * @var \TYPO3\CMS\Extbase\Persistence\ObjectStorage<\TYPO3\CMS\Extbase\Domain\Model\Category>
-     * @TYPO3\CMS\Extbase\Annotation\ORM\Lazy
-     */
-    protected $categories;
+    protected ObjectStorage $categories;
 
     public function __construct()
     {
         $this->images = new ObjectStorage();
         $this->categories = new ObjectStorage();
+    }
+
+    /**
+     * Called again with initialize object, as fetching an entity from the DB does not use the constructor
+     */
+    public function initializeObject(): void
+    {
+        $this->images = $this->images ?? new ObjectStorage();
+        $this->categories = $this->categories ?? new ObjectStorage();
     }
 
     public function getTitle(): string
@@ -71,11 +75,17 @@ class Glossary extends AbstractEntity
         $this->description = $description;
     }
 
+    /**
+     * @return ObjectStorage<FileReference>
+     */
     public function getImages(): ObjectStorage
     {
         return $this->images;
     }
 
+    /**
+     * @param ObjectStorage<FileReference> $images
+     */
     public function setImages(ObjectStorage $images): void
     {
         $this->images = $images;
@@ -91,11 +101,17 @@ class Glossary extends AbstractEntity
         $this->images->detach($image);
     }
 
+    /**
+     * @return ObjectStorage<Category>
+     */
     public function getCategories(): ObjectStorage
     {
         return $this->categories;
     }
 
+    /**
+     * @param ObjectStorage<Category> $categories
+     */
     public function setCategories(ObjectStorage $categories): void
     {
         $this->categories = $categories;
@@ -113,8 +129,7 @@ class Glossary extends AbstractEntity
 
     public function getSanitizedFirstLetterOfTitle(): string
     {
-        $charsetHelper = GeneralUtility::makeInstance(CharsetHelper::class);
-
-        return $charsetHelper->sanitize(mb_substr($this->getTitle(), 0, 1));
+        return GeneralUtility::makeInstance(CharsetHelper::class)
+            ->sanitize(mb_substr($this->getTitle(), 0, 1));
     }
 }

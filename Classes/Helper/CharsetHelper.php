@@ -20,15 +20,9 @@ use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
  */
 class CharsetHelper
 {
-    /**
-     * @var CharsetConverter
-     */
-    protected $charsetConverter;
+    protected CharsetConverter $charsetConverter;
 
-    /**
-     * @var EventDispatcher
-     */
-    protected $eventDispatcher;
+    protected EventDispatcher $eventDispatcher;
 
     public function __construct(CharsetConverter $charsetConverter, EventDispatcher $eventDispatcher)
     {
@@ -39,21 +33,18 @@ class CharsetHelper
     /**
      * Sanitize value by an automatism.
      * If you need, you can implement further sanitizing for chars the automatism does not respect.
-     *
-     * @param string $value
-     * @return string
      */
     public function sanitize(string $value): string
     {
         // This should sanitize the most values to ASCII
         $preSanitizedValue = $this->charsetConverter->specCharsToASCII(
             'utf-8',
-            mb_strtolower($value, 'utf-8')
+            mb_strtolower($value, 'utf-8'),
         );
 
         /** @var SanitizeValueForCharsetHelperEvent $event */
         $event = $this->eventDispatcher->dispatch(
-            new SanitizeValueForCharsetHelperEvent($preSanitizedValue)
+            new SanitizeValueForCharsetHelperEvent($preSanitizedValue),
         );
 
         return $event->getValue();

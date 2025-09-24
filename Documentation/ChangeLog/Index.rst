@@ -1,121 +1,202 @@
-.. include:: ../Includes.txt
+..  include:: /Includes.rst.txt
 
 
-.. _changelog:
+..  _changelog:
 
 =========
 ChangeLog
 =========
 
-**Version 5.0.8**
+Version 7.0.2
+=============
 
-Add TS settings for GlossaryService
+*   [BUGFIX] Backend plugin CType preview
 
-**Version 5.0.7**
+Version 7.0.1
+=============
 
-Register GlossaryService as public in Services.yaml
+*   [TASK] Added Glossary2 Site Set
+*   [TASK] Modified Update wizard for extending list plugins to CType
+*   [BUGFIX] Removed duplicate plugin wizard registered with page.tsconfig.
 
-**Version 5.0.6**
+Version 7.0.0
+=============
 
-Use array type for $availableLetters instead of string
-Merge 2 conditions
+*   [TASK] Compatibility fixes for TYPO3 13 LTS
+*   [TASK] Removed CSH-related method calls from extension
 
-**Version 5.0.5**
+Version 6.0.1
+=============
 
-Add sortby title for all queries
+*   [BUGFIX] Due to missing upgrade wizard implementation extension throws
+    error in CLI and backend upgrade wizard.
 
-**Version 5.0.4**
+Version 6.0.0
+=============
 
-Better support for PHP 8
-Use ProphecyTrait in functional tests.
-Reactivate a functional test
+*   [TASK] Compatibility fix for TYPO3 Version 12
+*   [TASK] Category in TCA fixed with type `category´
+*   [TASK] Migrated testing framework to TYPO3 Testing Framework
 
-**Version 5.0.3**
+Version 5.1.0
+=============
 
-Use SQL IN to select one or more categories
+*   [FEATURE] Allow QueryBuilder and extbase QueryResult for buildGlossar()
+*   [DOCU] Update section about how to use Glossary API
+*   [BUGFIX] Use extbase query for better localization support (BREAKING)
+*   [TASK] Modify params of ModifyQueryOfSearchGlossariesEvent
+*   [TASK] Show only categories in default language in FlexForm
+*   [TASK] Remove OverlayHelper class
+*   [TASK] Remove unused getGlossaries() method from repo
 
-**Version 5.0.2**
+Version 5.0.10
+==============
 
-Use SimplePaginator instead of our own one
+*   [BUGFIX] Remove exclude from path_segment in TCA
+*   [DOCU] Set indents to 4 spaces
+*   [DOCU] Streamline the headers
+*   [DOCU] Convert Readme.rst to README.md
+*   Update .gitignore
+*   Update .editorconfig
+*   Implement new php-cs-fixer configuration
 
-**Version 5.0.1**
+Version 5.0.9
+=============
 
-Add documentation about how to integrate Georg Ringers numbered_pagination
+*   [DOCU] Mistake in storagePid configuration
+*   Add .gitattributes
 
-**Version 5.0.0**
+Version 5.0.8
+=============
 
-Remove TYPO3 9 compatibility
-Add TYPO3 11 compatibility
-This version is still TYPO3 10 compatible
+*   Add TS settings for GlossaryService
 
-**Version 4.3.1**
+Version 5.0.7
+=============
 
-Move SlugHelper from constructor argument into getSlugHelper()
+*   Register GlossaryService as public in Services.yaml
 
-**Version 4.3.0**
+Version 5.0.6
+=============
 
-Allow overriding templatePath of glossary2 on page basis via TypoScript
+*   Use array type for $availableLetters instead of string
+*   Merge 2 conditions
 
-**Version 4.2.0**
+Version 5.0.5
+=============
 
-Add setting for PID to list/detail view in FlexForm
+*   Add sortby title for all queries
 
-**Version 4.1.1**
+Version 5.0.4
+=============
 
-Use unique instead of uniqueInSite for slug
+*   Better support for PHP 8
+*   Use ProphecyTrait in functional tests.
+*   Reactivate a functional test
 
-**Version 4.1.0**
+Version 5.0.3
+=============
 
-- Add 2 new methods to Glossary2 API to simplify your DB queries
-- All all API options to Fluid Template
-- Replace hard-coded action name in links with action name from API options
+*   Use SQL IN to select one or more categories
 
-**Version 4.0.2**
+Version 5.0.2
+=============
 
-- Use translation for path_segment from glosssary2 lang files
+*   Use SimplePaginator instead of our own one
 
-**Version 4.0.1**
+Version 5.0.1
+=============
 
-- Make templatePath configurable with Extension Settings
+*   Add documentation about how to integrate Georg Ringers numbered_pagination
 
-**Version 4.0.0**
+Version 5.0.0
+=============
 
-- Remove TYPO3 8 compatibility
-- Add TYPO3 10 compatibility
-- Add Service.yaml for DI
-- BUGFIX: Use DEV-Autoloader of glossary2 instead of events2
-- Repair UnitTests and FunctionalTests.
-- Add many more FunctionalTests
-- Add API to build a Glossary for foreign extensions
-- Add documentation for Glossary API
-- Update DocHeader. Add LICENSE file
+*   Remove TYPO3 9 compatibility
+*   Add TYPO3 11 compatibility
+*   This version is still TYPO3 10 compatible
 
-**Version 3.0.2**
+Version 4.3.1
+=============
 
-- Add link to our new Routes documentation in our documentation
+*   Move SlugHelper from constructor argument into getSlugHelper()
 
-**Version 3.0.1**
+Version 4.3.0
+=============
 
-- Add documentation for Route configuration
+*   Allow overriding templatePath of glossary2 on page basis via TypoScript
 
-**Version 3.0.0**
+Version 4.2.0
+=============
 
-- Changed all templates. They are using bootstrap classes now by default
-- Add SignalSlot to GlossaryRepository to modify Extbase Query
-- Removed SwitchableControllerActions from FlexForm. Please start UpdateWizard.
-- Add option to enable/disable the A-Z links on top
-- Add option to add/remove an ALL-Link in front of A-Z link list.
-- Removed action method showWithoutGlossar from Controller.
-- Moved ext_icon to new location in Public/Icons
-- Add Icon for glossary table
-- Little code refactorings like removing @return void
-- Update documentation
+*   Add setting for PID to list/detail view in FlexForm
 
-**Version 2.2.0**
+Version 4.1.1
+=============
 
-- Add documentation
-- Add new ext_icon as SVG
+*   Use unique instead of uniqueInSite for slug
 
-**Version 2.1.1**
+Version 4.1.0
+=============
 
-Now you can add cropping, alt and title information to images
+*   Add 2 new methods to Glossary2 API to simplify your DB queries
+*   All all API options to Fluid Template
+*   Replace hard-coded action name in links with action name from API options
+
+Version 4.0.2
+=============
+
+*   Use translation for path_segment from glosssary2 lang files
+
+Version 4.0.1
+=============
+
+*   Make templatePath configurable with Extension Settings
+
+Version 4.0.0
+=============
+
+*   Remove TYPO3 8 compatibility
+*   Add TYPO3 10 compatibility
+*   Add Service.yaml for DI
+*   BUGFIX: Use DEV-Autoloader of glossary2 instead of events2
+*   Repair UnitTests and FunctionalTests.
+*   Add many more FunctionalTests
+*   Add API to build a Glossary for foreign extensions
+*   Add documentation for Glossary API
+*   Update DocHeader. Add LICENSE file
+
+Version 3.0.2
+=============
+
+*   Add link to our new Routes documentation in our documentation
+
+Version 3.0.1
+=============
+
+*   Add documentation for Route configuration
+
+Version 3.0.0
+=============
+
+*   Changed all templates. They are using bootstrap classes now by default
+*   Add SignalSlot to GlossaryRepository to modify Extbase Query
+*   Removed SwitchableControllerActions from FlexForm. Please start UpdateWizard.
+*   Add option to enable/disable the A-Z links on top
+*   Add option to add/remove an ALL-Link in front of A-Z link list.
+*   Removed action method showWithoutGlossar from Controller.
+*   Moved ext_icon to new location in Public/Icons
+*   Add Icon for glossary table
+*   Little code refactorings like removing @return void
+*   Update documentation
+
+Version 2.2.0
+=============
+
+*   Add documentation
+*   Add new ext_icon as SVG
+
+Version 2.1.1
+=============
+
+*   Now you can add cropping, alt and title information to images

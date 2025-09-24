@@ -1,39 +1,27 @@
 <?php
-if (!defined('TYPO3_MODE')) {
+
+/*
+ * This file is part of the package jweiland/glossary2.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
+if (!defined('TYPO3')) {
     die('Access denied.');
 }
 
-call_user_func(static function () {
+use JWeiland\Glossary2\Controller\GlossaryController;
+use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
+
+call_user_func(static function (): void {
     \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
-        'glossary2',
+        'Glossary2',
         'Glossary',
         [
-            \JWeiland\Glossary2\Controller\GlossaryController::class => 'list, listWithoutGlossar, show',
-
+            GlossaryController::class => 'list, listWithoutGlossar, show',
         ],
-        // non-cacheable actions
-        [
-            \JWeiland\Glossary2\Controller\GlossaryController::class => '',
-        ]
+        [],
+        ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT,
     );
-
-    // Register SVG Icon Identifier
-    $svgIcons = [
-        'ext-glossary2-wizard-icon' => 'plugin_wizard.svg',
-    ];
-    $iconRegistry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Core\Imaging\IconRegistry::class);
-    foreach ($svgIcons as $identifier => $fileName) {
-        $iconRegistry->registerIcon(
-            $identifier,
-            \TYPO3\CMS\Core\Imaging\IconProvider\SvgIconProvider::class,
-            ['source' => 'EXT:glossary2/Resources/Public/Icons/' . $fileName]
-        );
-    }
-
-    // add glossary2 plugin to new element wizard
-    \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPageTSConfig('<INCLUDE_TYPOSCRIPT: source="FILE:EXT:glossary2/Configuration/TSconfig/ContentElementWizard.txt">');
-
-    // Update old flex form settings
-    $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['ext/install']['update']['glossary2UpdateOldFlexFormFields'] = \JWeiland\Glossary2\Updater\MoveOldFlexFormSettingsUpdater::class;
-    $GLOBALS['TYPO3_CONF_VARS']['SC_OPTIONS']['ext/install']['update']['glossary2UpdateSlug'] = \JWeiland\Glossary2\Updater\GlossarySlugUpdater::class;
 });

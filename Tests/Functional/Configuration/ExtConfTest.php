@@ -10,36 +10,31 @@
 namespace JWeiland\Glossary2\Tests\Functional\Configuration;
 
 use JWeiland\Glossary2\Configuration\ExtConf;
-use Nimut\TestingFramework\TestCase\FunctionalTestCase;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\TestingFramework\Core\Functional\FunctionalTestCase;
 
 /**
  * Test case
  */
 class ExtConfTest extends FunctionalTestCase
 {
-    /**
-     * @var ExtConf
-     */
-    protected $subject;
+    protected ExtConf $subject;
 
-    /**
-     * @var string[]
-     */
-    protected $testExtensionsToLoad = [
-        'typo3conf/ext/glossary2'
+    protected array $testExtensionsToLoad = [
+        'jweiland/glossary2',
     ];
 
     protected function setUp(): void
     {
         parent::setUp();
 
-        $this->subject = new ExtConf();
+        $this->subject = GeneralUtility::makeInstance(ExtConf::class);
     }
 
     protected function tearDown(): void
     {
         unset(
-            $this->subject
+            $this->subject,
         );
         parent::tearDown();
     }
@@ -51,7 +46,7 @@ class ExtConfTest extends FunctionalTestCase
     {
         self::assertSame(
             '0-9,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z',
-            $this->subject->getPossibleLetters()
+            $this->subject->getPossibleLetters(),
         );
     }
 
@@ -63,7 +58,7 @@ class ExtConfTest extends FunctionalTestCase
         $this->subject->setPossibleLetters('a,b,c');
         self::assertSame(
             'a,b,c',
-            $this->subject->getPossibleLetters()
+            $this->subject->getPossibleLetters(),
         );
     }
 }

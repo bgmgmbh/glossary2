@@ -15,28 +15,20 @@ use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationExtensionNotCon
 use TYPO3\CMS\Core\Configuration\Exception\ExtensionConfigurationPathDoesNotExistException;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 use TYPO3\CMS\Core\SingletonInterface;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /*
  * This class streamlines all settings from extension manager
  */
 class ExtConf implements SingletonInterface
 {
-    /**
-     * @var string
-     */
-    protected $possibleLetters = '';
+    protected string $possibleLetters = '';
 
-    /**
-     * @var string
-     */
-    protected $templatePath = '';
+    protected string $templatePath = '';
 
-    public function __construct()
+    public function __construct(ExtensionConfiguration $extensionConfiguration)
     {
         try {
-            // get global configuration
-            $extConf = GeneralUtility::makeInstance(ExtensionConfiguration::class)->get('glossary2');
+            $extConf = $extensionConfiguration->get('glossary2');
             if (is_array($extConf)) {
                 // call setter method foreach configuration entry
                 foreach ($extConf as $key => $value) {
@@ -46,10 +38,7 @@ class ExtConf implements SingletonInterface
                     }
                 }
             }
-        } catch (
-            ExtensionConfigurationExtensionNotConfiguredException
-            | ExtensionConfigurationPathDoesNotExistException $e
-        ) {
+        } catch (ExtensionConfigurationExtensionNotConfiguredException | ExtensionConfigurationPathDoesNotExistException $e) {
             // Use default values of this class
         }
     }

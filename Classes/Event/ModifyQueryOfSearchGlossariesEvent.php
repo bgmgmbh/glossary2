@@ -11,7 +11,8 @@ declare(strict_types=1);
 
 namespace JWeiland\Glossary2\Event;
 
-use TYPO3\CMS\Core\Database\Query\QueryBuilder;
+use JWeiland\Glossary2\Domain\Model\Glossary;
+use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 
 /*
  * Use this event, if you want to modify the query of GlossaryRepository::searchGlossaries.
@@ -19,35 +20,42 @@ use TYPO3\CMS\Core\Database\Query\QueryBuilder;
 class ModifyQueryOfSearchGlossariesEvent
 {
     /**
-     * @var QueryBuilder
+     * @var QueryResultInterface<int, Glossary>
      */
-    protected $queryBuilder;
+    protected QueryResultInterface $queryResult;
 
     /**
-     * @var array
+     * @var array<int>
      */
-    protected $categories = [];
+    protected array $categories = [];
+
+    protected string $letter = '';
 
     /**
-     * @var string
+     * @param QueryResultInterface<int, Glossary> $extbaseQuery
+     * @param array<int> $categories
      */
-    protected $letter = '';
-
     public function __construct(
-        QueryBuilder $queryBuilder,
+        QueryResultInterface $extbaseQuery,
         array $categories,
-        string $letter
+        string $letter,
     ) {
-        $this->queryBuilder = $queryBuilder;
+        $this->queryResult = $extbaseQuery;
         $this->categories = $categories;
         $this->letter = $letter;
     }
 
-    public function getQueryBuilder(): QueryBuilder
+    /**
+     * @return QueryResultInterface<int, Glossary>
+     */
+    public function getQueryResult(): QueryResultInterface
     {
-        return $this->queryBuilder;
+        return $this->queryResult;
     }
 
+    /**
+     * @return array<int>
+     */
     public function getCategories(): array
     {
         return $this->categories;

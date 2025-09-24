@@ -19,25 +19,26 @@ use TYPO3\CMS\Extbase\Mvc\Request;
  */
 class PostProcessFluidVariablesEvent implements ControllerActionEventInterface
 {
-    /**
-     * @var Request
-     */
-    protected $request;
+    protected Request $request;
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
-    protected $settings = [];
+    protected array $settings = [];
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
-    protected $fluidVariables = [];
+    protected array $fluidVariables = [];
 
+    /**
+     * @param array<string, mixed> $settings
+     * @param array<string, mixed> $fluidVariables
+     */
     public function __construct(
         Request $request,
         array $settings,
-        array $fluidVariables
+        array $fluidVariables,
     ) {
         $this->request = $request;
         $this->settings = $settings;
@@ -59,17 +60,23 @@ class PostProcessFluidVariablesEvent implements ControllerActionEventInterface
         return $this->request->getControllerActionName();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getSettings(): array
     {
         return $this->settings;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getFluidVariables(): array
     {
         return $this->fluidVariables;
     }
 
-    public function addFluidVariable(string $key, $value): void
+    public function addFluidVariable(string $key, mixed $value): void
     {
         $this->fluidVariables[$key] = $value;
     }

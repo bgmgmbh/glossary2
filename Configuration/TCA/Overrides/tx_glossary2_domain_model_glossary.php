@@ -1,17 +1,27 @@
 <?php
-if (!defined('TYPO3_MODE')) {
+
+/*
+ * This file is part of the package jweiland/glossary2.
+ *
+ * For the full copyright and license information, please read the
+ * LICENSE file that was distributed with this source code.
+ */
+
+if (!defined('TYPO3')) {
     die('Access denied.');
 }
 
-call_user_func(function () {
-    \TYPO3\CMS\Core\Utility\ExtensionManagementUtility::makeCategorizable(
-        'glossary2',
+use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
+
+call_user_func(static function (): void {
+    $GLOBALS['TCA']['tx_glossary2_domain_model_glossary']['columns']['categories'] = [
+        'config' => [
+            'type' => 'category',
+        ],
+    ];
+
+    ExtensionManagementUtility::addToAllTCAtypes(
         'tx_glossary2_domain_model_glossary',
         'categories',
-        [
-            'fieldConfiguration' => [
-                'foreign_table_where' => ' AND sys_category.sys_language_uid IN (-1, 0) ORDER BY sys_category.title ASC',
-            ],
-        ]
     );
 });

@@ -1,17 +1,27 @@
 {
-	"name": "jweiland/glossary2",
-	"type": "typo3-cms-extension",
+	"name": "bgm/glossary2",
 	"description": "This TYPO3 extension creates a glossary with A-Z links for you",
 	"license": "GPL-2.0-or-later",
-	"keywords": ["typo3", "TYPO3 CMS", "glossar", "glossary2"],
-	"homepage": "http://www.jweiland.net",
+	"type": "typo3-cms-extension",
+	"keywords": [
+		"typo3",
+		"TYPO3 CMS",
+		"glossar",
+		"glossary2"
+	],
 	"authors": [
 		{
 			"name": "Stefan Froemken",
 			"email": "sfroemken@jweiland.net",
 			"role": "Lead Developer"
+		},
+		{
+			"name": "Hoja Mustaffa Abdul Latheef",
+			"email": "hlatheef@jweiland.net",
+			"role": "Senior Developer"
 		}
 	],
+	"homepage": "https://jweiland.net",
 	"support": {
 		"email": "projects@jweiland.net",
 		"issues": "https://github.com/jweiland-net/glossary2/issues",
@@ -19,13 +29,21 @@
 	},
 	"require": {
 		"ext-pdo": "*",
-		"typo3/cms-core": "^10.4.19 || ^11.5.21"
+		"typo3/cms-core": "^13.4.0",
+		"typo3/cms-install": "^13.4.0"
 	},
 	"require-dev": {
+		"ergebnis/composer-normalize": "^2.44",
+		"friendsofphp/php-cs-fixer": "^3.14",
+		"phpstan/phpdoc-parser": "^1.33",
+		"phpstan/phpstan": "1.10",
+		"phpunit/phpunit": "^11.2.5",
 		"roave/security-advisories": "dev-latest",
-		"friendsofphp/php-cs-fixer": "^3.0",
-		"nimut/testing-framework": "^6.0",
-		"phpspec/prophecy-phpunit": "^2.0"
+		"typo3/coding-standards": "^0.8",
+		"typo3/testing-framework": "^9.0.1"
+	},
+	"replace": {
+		"typo3-ter/glossary2": "self.version"
 	},
 	"autoload": {
 		"psr-4": {
@@ -38,31 +56,20 @@
 		}
 	},
 	"config": {
-		"vendor-dir": ".build/vendor",
 		"allow-plugins": {
+			"ergebnis/composer-normalize": true,
 			"typo3/class-alias-loader": true,
 			"typo3/cms-composer-installers": true
-		}
+		},
+		"bin-dir": ".Build/bin",
+		"sort-packages": true,
+		"vendor-dir": ".Build/vendor"
 	},
 	"extra": {
 		"typo3/cms": {
+			"app-dir": ".Build",
 			"extension-key": "glossary2",
-			"app-dir": ".build",
-			"web-dir": ".build/public"
+			"web-dir": ".Build/public"
 		}
-	},
-	"scripts": {
-		"php:fix": ".build/vendor/bin/php-cs-fixer --config=Build/.php_cs.php fix Classes Tests",
-		"ci:php:lint": "find *.php Classes Configuration Tests -name '*.php' -print0 | xargs -0 -n 1 -P 4 php -l",
-		"ci:php:fixer": ".build/vendor/bin/php-cs-fixer --config=Build/.php_cs.php fix --dry-run -v --diff --show-progress=dots Classes Tests",
-		"ci:tests:unit": ".build/vendor/bin/phpunit -c .build/vendor/nimut/testing-framework/res/Configuration/UnitTests.xml Tests/Unit",
-		"ci:tests:functional": "find 'Tests/Functional' -wholename '*Test.php' | parallel --gnu 'echo; echo \"Running functional test suite {}\"; php -d date.timezone=Europe/Berlin .build/vendor/bin/phpunit -c .build/vendor/nimut/testing-framework/res/Configuration/FunctionalTests.xml {}';",
-		"link-extension": [
-			"@php -r 'is_dir($extFolder=__DIR__.\"/.build/public/typo3conf/ext/\") || mkdir($extFolder, 0777, true);'",
-			"@php -r 'file_exists($extFolder=__DIR__.\"/.build/public/typo3conf/ext/glossary2\") || symlink(__DIR__,$extFolder);'"
-		],
-		"post-autoload-dump": [
-			"@link-extension"
-		]
 	}
 }

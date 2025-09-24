@@ -15,30 +15,29 @@ use JWeiland\Glossary2\Domain\Model\Glossary;
 use JWeiland\Glossary2\Domain\Repository\GlossaryRepository;
 use JWeiland\Glossary2\Event\PostProcessFluidVariablesEvent;
 use JWeiland\Glossary2\Service\GlossaryService;
+use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Core\View\ViewInterface;
+use TYPO3\CMS\Extbase\Annotation as Extbase;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
-use TYPO3\CMS\Extbase\Mvc\View\ViewInterface;
+use TYPO3\CMS\Frontend\ContentObject\ContentObjectRenderer;
 
 /**
- * Main controller of glossary2
+ * Main controller of glossary2 to list and show glossary records
  */
 class GlossaryController extends ActionController
 {
-    /**
-     * @var GlossaryRepository
-     */
-    protected $glossaryRepository;
+    protected GlossaryRepository $glossaryRepository;
 
-    /**
-     * @var GlossaryService
-     */
-    protected $glossaryService;
+    protected GlossaryService $glossaryService;
 
-    public function __construct(
-        GlossaryRepository $glossaryRepository,
-        GlossaryService $glossaryService
-    ) {
+    public function injectGlossaryRepository(GlossaryRepository $glossaryRepository): void
+    {
         $this->glossaryRepository = $glossaryRepository;
+    }
+
+    public function injectGlossaryService(GlossaryService $glossaryService): void
+    {
         $this->glossaryService = $glossaryService;
     }
 
@@ -53,14 +52,14 @@ class GlossaryController extends ActionController
 
     protected function initializeView(ViewInterface $view): void
     {
-        $view->assign('data', $this->configurationManager->getContentObject()->data);
+        $view->assign('data', $this->getContentObjectData());
     }
 
     /**
      * @param string $letter Show only records starting with this letter
-     * @TYPO3\CMS\Extbase\Annotation\Validate("StringLength", options={"minimum": 1, "maximum": 3}, param="letter")
+     * @Extbase\Validate("StringLength", options={"minimum": 1, "maximum": 3}, param="letter")
      */
-    public function listAction(string $letter = ''): void
+    public function listAction(string $letter = ''): ResponseInterface
     {
         $language = $GLOBALS['TYPO3_REQUEST']->getAttribute('language');
 
@@ -69,33 +68,50 @@ class GlossaryController extends ActionController
             'letter' => $letter,
             'glossaries' => $this->glossaryRepository->searchGlossaries(
                 GeneralUtility::intExplode(',', $this->settings['categories'], true),
-                $letter
-            )
+                $letter,
+            ),
         ]);
+        return $this->htmlResponse();
     }
 
-    /**
-     * @param Glossary $glossary
-     */
-    public function showAction(Glossary $glossary): void
+    public function showAction(Glossary $glossary): ResponseInterface
     {
         $this->postProcessAndAssignFluidVariables([
             'glossary' => $glossary,
-            'letter' => $glossary->getSanitizedFirstLetterOfTitle()
+            'letter' => $glossary->getSanitizedFirstLetterOfTitle(),
         ]);
+        return $this->htmlResponse();
     }
 
+    /**
+     * @param array<string, mixed> $variables
+     */
     protected function postProcessAndAssignFluidVariables(array $variables = []): void
     {
         /** @var PostProcessFluidVariablesEvent $event */
         $event = $this->eventDispatcher->dispatch(
             new PostProcessFluidVariablesEvent(
+                /** @phpstan-ignore-next-line */
                 $this->request,
                 $this->settings,
-                $variables
-            )
+                $variables,
+            ),
         );
 
         $this->view->assignMultiple($event->getFluidVariables());
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    protected function getContentObjectData(): array
+    {
+        $data = [];
+        $contentObjectRenderer = $this->request->getAttribute('currentContentObject');
+        if ($contentObjectRenderer instanceof ContentObjectRenderer && is_array($contentObjectRenderer->data)) {
+            $data = $contentObjectRenderer->data;
+        }
+
+        return $data;
     }
 }

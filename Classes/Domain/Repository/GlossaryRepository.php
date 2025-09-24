@@ -11,79 +11,51 @@ declare(strict_types=1);
 
 namespace JWeiland\Glossary2\Domain\Repository;
 
-use JWeiland\Glossary2\Event\ModifyQueryOfGetGlossariesEvent;
+use JWeiland\Glossary2\Domain\Model\Glossary;
 use JWeiland\Glossary2\Event\ModifyQueryOfSearchGlossariesEvent;
-use JWeiland\Glossary2\Helper\OverlayHelper;
-use TYPO3\CMS\Core\Database\Connection;
-use TYPO3\CMS\Core\Database\ConnectionPool;
-use TYPO3\CMS\Core\Database\Query\QueryBuilder;
-use TYPO3\CMS\Core\Database\Query\Restriction\FrontendRestrictionContainer;
-use TYPO3\CMS\Core\EventDispatcher\EventDispatcher;
-use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
+use Psr\EventDispatcher\EventDispatcherInterface as EventDispatcher;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Extbase\Persistence\Exception\InvalidQueryException;
+use TYPO3\CMS\Extbase\Persistence\QueryInterface;
 use TYPO3\CMS\Extbase\Persistence\QueryResultInterface;
 use TYPO3\CMS\Extbase\Persistence\Repository;
 
+use TYPO3\CMS\Core\Site\Entity\SiteLanguage;
+
 /**
  * This class contains all queries to get needed glossary entries from DB
+ *
+ * @extends Repository<Glossary>
  */
-class GlossaryRepository extends Repository
-{
-    /**
-     * @var EventDispatcher
-     */
-    protected $eventDispatcher;
+class GlossaryRepository extends Repository {
 
-    /**
-     * @var OverlayHelper
-     */
-    protected $overlayHelper;
+    protected $defaultOrderings = [
+        'title' => QueryInterface::ORDER_ASCENDING,
+    ];
 
-    public function injectOverlayHelper(OverlayHelper $overlayHelper): void
-    {
-        $this->overlayHelper = $overlayHelper;
-    }
+    protected EventDispatcher $eventDispatcher;
 
-    public function injectEventDispatcher(EventDispatcher $eventDispatcher): void
-    {
+    public function injectEventDispatcher(EventDispatcher $eventDispatcher): void {
         $this->eventDispatcher = $eventDispatcher;
     }
 
-    public function getGlossaries(): QueryResultInterface
-    {
-        $extbaseQuery = $this->createQuery();
-        $queryBuilder = $this->getQueryBuilderForTable('tx_glossary2_domain_model_glossary', 'g');
-        $queryBuilder->select('*');
-
-        $this->eventDispatcher->dispatch(new ModifyQueryOfGetGlossariesEvent($queryBuilder));
-
-        $extbaseQuery->statement($queryBuilder);
-
-        return $extbaseQuery->execute();
-    }
-
-    public function searchGlossaries(array $categories = [], string $letter = '')
-    {
-        // Set respectSysLanguage to false to keep our already translated records
-        $extbaseQuery = $this->createQuery();
-        $extbaseQuery->getQuerySettings()->setRespectSysLanguage(true);
-
-        $queryBuilder = $this->getQueryBuilderForTable(
-            'tx_glossary2_domain_model_glossary',
-            'g',
-            true
+    /**
+     * @param int[]  $categories Array of category IDs
+     * @param string $letter     The letter to filter glossaries by title
+     *
+     * @return array<int, Glossary> Result set of glossaries matching the criteria
+     */
+    public function searchGlossaries(array $categories = [], string $letter = ''): array {
+        $query = $this->createQuery();
+        \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump(
+            $query->getQuerySettings(),
+        __FILE__ . ':' . __LINE__ . ':' . __FUNCTION__
         );
-        $queryBuilder->select('*');
 
+        $constraints = [];
         if ($this->checkArgumentsForSearchGlossaries($categories, $letter)) {
-            $andConstraints = [];
-
             if ($categories !== []) {
-                $this->addCategoryConstraintToQueryBuilder(
-                    $queryBuilder,
-                    'tx_glossary2_domain_model_glossary',
-                    $categories
-                );
+                $constraints[] = $query->in('categories.uid', $categories);
             }
 
             // Add letter to constraint
@@ -91,33 +63,27 @@ class GlossaryRepository extends Repository
                 if ($letter === '0-9') {
                     $letterConstraint = [];
                     for ($i = 0; $i < 10; $i++) {
-                        $letterConstraint[] = $queryBuilder->expr()->like(
-                            'title',
-                            $queryBuilder->createNamedParameter($i . '%', \PDO::PARAM_STR)
-                        );
+                        $letterConstraint[] = $query->like('title', $i . '%');
                     }
-                    $andConstraints[] = $queryBuilder->expr()->orX(...$letterConstraint);
-                } else {
-                    $andConstraints[] = $queryBuilder->expr()->like(
-                        'title',
-                        $queryBuilder->createNamedParameter($letter . '%', \PDO::PARAM_STR)
-                    );
+                    $constraints[] = $query->logicalOr(...$letterConstraint);
                 }
-
-                $queryBuilder->andWhere(...$andConstraints);
+                else {
+                    $constraints[] = $query->like('title', $letter . '%');
+                }
             }
         }
 
+        $queryResult = $query->execute();
+        if ($constraints !== []) {
+            $queryResult = $query->matching($query->logicalAnd(...$constraints))->execute();
+        }
+
         $this->eventDispatcher->dispatch(
-            new ModifyQueryOfSearchGlossariesEvent($queryBuilder, $categories, $letter)
+            new ModifyQueryOfSearchGlossariesEvent($queryResult, $categories, $letter),
         );
 
-        $extbaseQuery->statement($queryBuilder);
-
-        $results = $extbaseQuery->execute();
-
         $sorted = [];
-        foreach($results as $result){
+        foreach ($queryResult as $result) {
             $title = $this->cleanOutUmlauts($result->getTitle());
             $sorted[$title . $result->getUid()] = $result;
         }
@@ -126,7 +92,7 @@ class GlossaryRepository extends Repository
         return $sorted;
     }
 
-    protected function cleanOutUmlauts($string){
+    protected function cleanOutUmlauts($string) {
         $string = mb_strtolower($string);
         $string = str_replace('ä', 'ae', $string);
         $string = str_replace('ö', 'oe', $string);
@@ -134,110 +100,54 @@ class GlossaryRepository extends Repository
         return $string;
     }
 
-    protected function checkArgumentsForSearchGlossaries(array $categories, string $letter): bool
-    {
-        // check categories as they can also be set by TypoScript
+    /**
+     * Prepare an Extbase QueryResult for GlossaryService (A-Z navigation)
+     *
+     * @param array $categories
+     *
+     * @throws InvalidQueryException
+     */
+    /** @phpstan-ignore-next-line */
+    public function getExtbaseQueryForGlossary(array $categories = []): QueryResultInterface {
+        $query = $this->createQuery();
+
+        if (
+            $this->checkArgumentsForSearchGlossaries($categories, '')
+            && $categories !== []
+        ) {
+            return $query->matching($query->in('categories.uid', $categories))->execute();
+        }
+
+        return $query->execute();
+    }
+
+    /**
+     * @param array<int> $categories
+     */
+    protected function checkArgumentsForSearchGlossaries(array $categories, string $letter): bool {
+        // Check categories. Cast category UIDs to int and remove empty values
         $intCategories = GeneralUtility::intExplode(
             ',',
             implode(
                 ',',
-                $categories
+                $categories,
             ),
-            true
+            TRUE,
         );
+
         if ($intCategories !== $categories) {
-            return false;
-        }
-        if (in_array(0, $intCategories, true)) {
-            return false;
+            return FALSE;
         }
 
-        // check letter
-        if (!is_string($letter) || ($letter !== '' && !preg_match('@^0-9$|^[a-z]$@', $letter))) {
-            return false;
+        if (in_array(0, $intCategories, TRUE)) {
+            return FALSE;
+        }
+
+        // Check letter
+        if ($letter !== '' && !preg_match('@^0-9$|^[a-z]$@', $letter)) {
+            return FALSE;
         }
 
         return true;
-    }
-
-    /**
-     * Prepare a QueryBuilder for glossary (A-Z navigation)
-     *
-     * @param array $categories
-     * @return QueryBuilder
-     */
-    public function getQueryBuilderForGlossary(array $categories = []): QueryBuilder
-    {
-        $queryBuilder = $this->getQueryBuilderForTable('tx_glossary2_domain_model_glossary', 'g');
-
-        if (!empty($categories)) {
-            $this->addCategoryConstraintToQueryBuilder(
-                $queryBuilder,
-                'tx_glossary2_domain_model_glossary',
-                $categories
-            );
-        }
-
-        return $queryBuilder;
-    }
-
-    protected function addCategoryConstraintToQueryBuilder(
-        QueryBuilder $queryBuilder,
-        string $table,
-        array $categories
-    ): void {
-        $queryBuilder
-            ->leftJoin(
-                'g',
-                'sys_category_record_mm',
-                'sc_mm',
-                $queryBuilder->expr()->eq(
-                    'g.uid',
-                    $queryBuilder->quoteIdentifier('sc_mm.uid_foreign')
-                )
-            )
-            ->andWhere(
-                $queryBuilder->expr()->eq(
-                    'sc_mm.tablenames',
-                    $queryBuilder->createNamedParameter($table, \PDO::PARAM_STR)
-                ),
-                $queryBuilder->expr()->eq(
-                    'sc_mm.fieldname',
-                    $queryBuilder->createNamedParameter('categories', \PDO::PARAM_STR)
-                ),
-                $queryBuilder->expr()->in(
-                    'sc_mm.uid_local',
-                    $queryBuilder->createNamedParameter($categories, Connection::PARAM_INT_ARRAY)
-                )
-            );
-    }
-
-    protected function getQueryBuilderForTable(string $table, string $alias, bool $useLangStrict = false): QueryBuilder
-    {
-        $extbaseQuery = $this->createQuery();
-
-        $queryBuilder = $this->getConnectionPool()->getQueryBuilderForTable($table);
-        $queryBuilder->setRestrictions(GeneralUtility::makeInstance(FrontendRestrictionContainer::class));
-        $queryBuilder
-            ->from($table, $alias)
-            ->andWhere(
-                $queryBuilder->expr()->in(
-                    'pid',
-                    $queryBuilder->createNamedParameter(
-                        $extbaseQuery->getQuerySettings()->getStoragePageIds(),
-                        Connection::PARAM_INT_ARRAY
-                    )
-                )
-            )
-            ->orderBy('title', 'ASC');
-
-        $this->overlayHelper->addWhereForOverlay($queryBuilder, $table, $alias, $useLangStrict);
-
-        return $queryBuilder;
-    }
-
-    protected function getConnectionPool(): ConnectionPool
-    {
-        return GeneralUtility::makeInstance(ConnectionPool::class);
     }
 }

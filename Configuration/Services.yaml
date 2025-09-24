@@ -6,6 +6,7 @@ services:
 
   JWeiland\Glossary2\:
     resource: '../Classes/*'
+    exclude: '../Classes/Domain/Model/*'
 
   JWeiland\Glossary2\EventListener\AddPaginatorEventListener:
     tags:
@@ -21,9 +22,9 @@ services:
   JWeiland\Glossary2\Helper\CharsetHelper:
     public: true
 
-  JWeiland\Glossary2\Helper\OverlayHelper:
-    public: true
-
   JWeiland\Glossary2\Service\GlossaryService:
     public: true
 
+  # Called by makeInstance out of TypoScript
+  JWeiland\Glossary2\PageTitleProvider\Glossary2PageTitleProvider:
+    public: true
