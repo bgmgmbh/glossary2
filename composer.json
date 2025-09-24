@@ -1,8 +1,9 @@
 {
-	"name": "jweiland/glossary",
+	"name": "jweiland/glossary2",
 	"description": "This TYPO3 extension creates a glossary with A-Z links for you",
 	"license": "GPL-2.0-or-later",
 	"type": "typo3-cms-extension",
+	"version": "13.4.1",
 	"keywords": [
 		"typo3",
 		"TYPO3 CMS",
