@@ -47,10 +47,6 @@ class GlossaryRepository extends Repository {
      */
     public function searchGlossaries(array $categories = [], string $letter = ''): array {
         $query = $this->createQuery();
-        \TYPO3\CMS\Extbase\Utility\DebuggerUtility::var_dump(
-            $query->getQuerySettings(),
-        __FILE__ . ':' . __LINE__ . ':' . __FUNCTION__
-        );
 
         $constraints = [];
         if ($this->checkArgumentsForSearchGlossaries($categories, $letter)) {
